@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace P2MABB.Shared
 {
-    internal class Ventas
+    public class Ventas
     {
         [Key]
         public int VentaId { get; set; }
