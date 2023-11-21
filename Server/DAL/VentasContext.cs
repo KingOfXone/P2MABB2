@@ -7,7 +7,7 @@ namespace P2MABB.Server.DAL
 	{
 		public DbSet<Shared.Ventas> Ventas { get; set; }
 		public DbSet<Shared.VentasDetalles> VentasDetalles { get; set; }
-		public DbSet<Shared.Clientes> Clientes { get; set; }
+        public DbSet<Shared.Clientes> Clientes { get; set; }
 
 		public VentasContext(DbContextOptions<VentasContext> options) : base(options)
 		{
