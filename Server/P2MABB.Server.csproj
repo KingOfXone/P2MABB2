@@ -21,5 +21,10 @@
     <ProjectReference Include="..\Shared\P2MABB.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+    <Folder Include="Data\" />
+  </ItemGroup>
+
 
 </Project>
