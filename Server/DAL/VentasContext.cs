@@ -33,5 +33,6 @@ namespace P2MABB.Server.DAL
         });
 
         }
+        public DbSet<P2MABB.Shared.Cobros> Cobros { get; set; } = default!;
     }
 }
