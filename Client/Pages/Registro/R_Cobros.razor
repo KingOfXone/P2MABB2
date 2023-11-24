@@ -1,0 +1,278 @@
+﻿@page "/R_Cobros"
+@page "/R_Cobros/{CobroId:int}"
+@using P2MABB.Shared
+@inject NotificationService notificacionesService
+@inject HttpClient httpClient
+
+
+<PageTitle>Registro de cobros</PageTitle>
+
+<div class="card-header">
+	<h3>Registros de cobros</h3>
+</div>
+
+<EditForm Model="cobros" OnValidSubmit="Guardar">
+	<DataAnnotationsValidator />
+
+	@*ID y Fecha*@
+	<div class="row">
+		<div class="col-xs-12 col-sm-12 col-md-8 col-lg-6 col-xl-4 mt-4">
+			<label class="form-label" @for="productos.ProductoId">Id</label>
+			<div class="d-flex align-items-center">
+				<InputNumber readonly min="0" class="form-control" @bind-Value="cobros.CobroId" />
+			</div>
+		</div>
+
+		<div class="col-xs-12 col-sm-12 col-md-8 col-lg-6 col-xl-4 mt-4 text-right">
+			<label class="form-label" @for="ventas.Fecha">Fecha</label>
+			<div class="d-flex align-items-center">
+				<InputDate readonly id="Fecha" class="form-control" @bind-Value="cobros.Fecha" />
+			</div>
+		</div>
+
+	</div>
+
+	<div class="col-xs-12 col-sm-12 col-md-8 col-lg-6 col-xl-4 mt-4">
+		<label class="form-label" @for="ventas.ClienteId">Nombre del Cliente</label>
+		<div class="d-flex align-items-center">
+			<InputSelect class="form-select" @bind-Value="ventas.ClienteId">
+				<option value="0" disabled selected> [Seleccione] </option>
+				@foreach (var cliente in ListaClientes)
+				{
+					<option value="@cliente.ClienteId">@cliente.Nombres</option>
+
+				}
+			</InputSelect>
+		</div>
+	</div>
+
+	<div class="card-header mt-4">
+
+		<h5>Facturas Pendientes</h5>
+
+		<div class="row">
+
+
+		</div>
+
+		<table class='table table-sm mt-2'>
+			<thead>
+				<tr>
+					<th>Id</th>
+					<th>Fecha</th>
+					<th>Monto</th>
+					<th>Balance</th>
+					<th>Cobrado</th>
+					<th>Pagas</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var item in ventasDelCliente)
+				{
+					if (ventas.ClienteId == item.ClienteId)
+					{
+						<tr>
+							<td>@item.VentaId</td>
+							<td>@item.Fecha</td>
+							<td>$ @item.Monto</td>
+							<td>$ @item.Balance</td>
+							<td>
+								<InputNumber class="form-control" @bind-Value="DiccionarioCobrosDetalle[item.VentaId].montoCobrado" />
+							</td>
+							<td>
+								<InputCheckbox class="form-check" @bind-Value="DiccionarioCobrosDetalle	[item.VentaId].esCobrado"/>
+							</td>
+						</tr>
+					}
+				}
+			</tbody>
+		</table>
+
+	</div>
+
+	<div class="form-group mt-4">
+		<label for="observacion">Observaci&oacute;n:</label>
+		<InputTextArea id="observacion" @bind-Value="cobrado.Observaciones" class="form-control" ></InputTextArea>
+	</div>
+
+	<div class="d-flex justify-content-center mb-4 mt-4">
+		<div class="btn-group">
+			<button type="button" class="btn btn-outline-primary" @onclick="Nuevo"> Nuevo <i class="oi oi-file" /></button>
+			<button type="submit" class="btn btn-outline-success" @onclick="Guardar"> Guardar <i class="oi oi-document" /></button>
+			<button type="button" class="btn btn-outline-danger" @onclick="Eliminar">Eliminar <i class="oi oi-trash" /></button>
+		</div>
+	</div>
+
+</EditForm>
+
+@code {
+
+	[Parameter]
+	public int CobroId { get; set; }
+
+	public Ventas ventas { get; set; } = new Ventas();
+	public Cobros cobrado { get; set; } = new Cobros();
+
+	public List<Ventas> ventasDelCliente { get; set; } = new List<Ventas>();
+
+	public Clientes clientes { get; set; } = new Clientes();
+	List<Clientes> ListaClientes { get; set; } = new List<Clientes>();
+
+	public Cobros cobros { get; set; } = new Cobros();
+	List<Cobros> ListaCobros { get; set; } = new List<Cobros>();
+
+	public CobrosDetalle cobrosDetalle { get; set; } = new CobrosDetalle();
+	public Dictionary<int, CobrosDetalle> DiccionarioCobrosDetalle { get; set; } = new Dictionary<int, CobrosDetalle>();
+
+
+	protected override async Task OnInitializedAsync()
+	{
+		await CargarClientes();
+		await CargarVentas();
+
+		foreach (var item in ventasDelCliente)
+		{
+			DiccionarioCobrosDetalle[item.VentaId] = new CobrosDetalle
+			{
+				VentaId = item.VentaId,
+			};
+		}
+
+		if(CobroId > 0)
+		{
+			this.cobros.CobroId = CobroId;
+			await Buscar();
+		}
+
+
+	}
+
+	protected async Task Buscar()
+	{
+		try { await httpClient.GetFromJsonAsync<Cobros>($"api/Cobros/{cobros.CobroId}"); }
+		catch
+		{
+			var mensaje = new NotificationMessage
+				{
+					Severity = NotificationSeverity.Error,
+					Summary = "No se ha encontrado.",
+					Detail = "No se encontró uno cobro con el ID que estás buscando. ",
+					Duration = 4000
+				};
+			notificacionesService.Notify(mensaje);
+			this.Nuevo();
+			return;
+		}
+		var CobroEncontrado = await httpClient.GetFromJsonAsync<Cobros>($"api/Cobros/{cobros.CobroId}");
+		if (CobroEncontrado != null)
+		{
+			this.cobros = CobroEncontrado;
+
+		}
+	}
+
+	protected async Task Guardar()
+	{
+
+		using var response = await httpClient.PostAsJsonAsync("api/Cobros", cobros);
+		if (!response.IsSuccessStatusCode)
+		{
+			var mensaje = new NotificationMessage
+				{
+					Severity = NotificationSeverity.Error,
+					Summary = "No se pudo guardar el cobro",
+					Detail = $"No se pudo guardar el cobro con el Id: {cobros.CobroId}",
+					Duration = 5_000
+				};
+			notificacionesService.Notify(mensaje);
+		}
+		else
+		{
+			var cobroGuardado = await response.Content.ReadFromJsonAsync<Cobros>();
+			if (cobroGuardado is not null)
+			{
+				this.cobros = cobroGuardado;
+
+				var mensaje = new NotificationMessage
+					{
+						Severity = NotificationSeverity.Success,
+						Summary = "Cobro Guardado",
+						Detail = $"Se guardó el cobro con el Id: {cobros.CobroId}",
+						Duration = 5_000
+					};
+				notificacionesService.Notify(mensaje);
+				StateHasChanged();
+				Nuevo();
+			}
+		}
+
+	}
+
+	protected async Task Nuevo()
+	{
+		this.ventas = new Ventas();
+		this.clientes = new Clientes();
+		
+		await CargarClientes();
+		await CargarVentas();
+
+		var mensaje = new NotificationMessage
+			{
+				Severity = NotificationSeverity.Success,
+				Summary = "Nuevo ",
+				Detail = "Puede introducir una nueva Venta",
+				Duration = 5_000
+			};
+		notificacionesService.Notify(mensaje);
+	}
+
+	protected async Task Eliminar()
+	{
+		using var reponse = await httpClient.DeleteAsync($"api/Cobros/{cobros.CobroId}");
+		if(!reponse.IsSuccessStatusCode)
+		{
+			var mensaje = new NotificationMessage
+			{
+				Severity = NotificationSeverity.Error,
+				Summary = "No se pudo eliminar la Venta",
+				Detail = $"No se pudo eliminar el cobro con el Id: {cobros.CobroId}",
+				Duration = 5_000
+			};
+			notificacionesService.Notify(mensaje);
+		}
+		else
+		{
+			var mensaje = new NotificationMessage
+			{
+				Severity = NotificationSeverity.Success,
+				Summary = "Venta Eliminada",
+				Detail = $"Se elimino el cobro con el Id: {cobros.CobroId}",
+				Duration = 5_000
+			};
+			notificacionesService.Notify(mensaje);
+			Nuevo();
+		}
+	}
+	
+	private async Task CargarClientes()
+	{
+		var encontrados = await httpClient.GetFromJsonAsync<List<Clientes>>("api/Clientes");
+		if (encontrados != null)
+			ListaClientes = encontrados;
+	}
+
+	private async Task CargarVentas()
+	{
+		var encontrados = await httpClient.GetFromJsonAsync<List<Ventas>>("api/Ventas");
+		if (encontrados != null)
+			ventasDelCliente = encontrados;
+	}
+
+	private async Task CargarCobros()
+	{
+		var encontrados = await httpClient.GetFromJsonAsync<List<Ventas>>("api/Cobros");
+		if (encontrados != null)
+			ventasDelCliente = encontrados;
+	}
+}

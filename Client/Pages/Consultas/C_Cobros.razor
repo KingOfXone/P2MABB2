@@ -1,0 +1,79 @@
+﻿@page "/C_Cobros"
+@using P2MABB.Shared
+@inject NotificationService notificationService
+@inject HttpClient httpClient
+
+<div class="card-header mt-4">
+
+    <div class="card-header">
+        <h3>Consulta de Productos</h3>
+    </div>
+
+	<div class="col col-md-4 mt-4">
+		<button class="btn btn-primary ml-2" type="button" @onclick="Buscar">
+			<i class="oi oi-magnifying-glass" />
+		</button>
+	</div>
+
+	<div class="card-body">
+		<div class="table-responsive ">
+			<table border="1" class="table table-bordered table-striped ">
+				<thead>
+					<tr class="table-secondary">
+						<th>Id Cliente</th>
+						<th>Cliente Nombre</th>
+						<th>Fecha</th>
+						<th>Monto</th>
+						<th>Balance</th>
+						<th>Ver</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach(var cliente in ListaClientes)
+					{
+						<tr>
+							<td>@cliente.ClienteId</td>
+							<td>@cliente.Nombres</td>
+							@foreach(var venta in ListaVentas)
+							{
+								<td>@venta.Fecha</td>
+								<td>@venta.Monto</td>
+								<td>@venta.Balance</td>
+							}
+
+						</tr>
+					}
+				</tbody>
+
+			</table>
+
+		</div>
+	</div>
+</div>
+
+
+
+@code {
+
+	public List<Clientes> ListaClientes { get; set; } = new List<Clientes>();
+	public List<Ventas> ListaVentas { get; set; } = new List<Ventas>();
+
+	public Cobros cobros { get; set; } = new Cobros();
+
+	public async Task Buscar()
+	{
+		try { await httpClient.GetFromJsonAsync<Cobros>($"api/Cobros/{cobros.CobroId}"); }
+		catch
+		{
+			var mensaje = new NotificationMessage
+			{
+				Summary = "No se pudo encontrar el producto",
+				Detail = $"El producto con el id {cobros.CobroId} no se pudo encontrar",
+				Duration = 3000,
+				Severity = NotificationSeverity.Error
+			};
+
+			notificationService.Notify(mensaje);
+		}
+	}
+}
