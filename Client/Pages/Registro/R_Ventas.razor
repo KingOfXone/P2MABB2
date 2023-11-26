@@ -81,118 +81,118 @@
 
 @code {
 
-	[Parameter]
-	public int RVentasId { get; set; }
+    [Parameter]
+    public int RVentasId { get; set; }
 
-	public Ventas ventas { get; set; } = new Ventas();
-	public Clientes clientes { get; set; } = new Clientes();
+    public Ventas ventas { get; set; } = new Ventas();
+    public Clientes clientes { get; set; } = new Clientes();
 
-	protected override async Task OnInitializedAsync()
-	{
-		if(RVentasId > 0)
-		{
-			this.ventas.VentaId = RVentasId;
-			await Buscar();
-		}
-	}
+    protected override async Task OnInitializedAsync()
+    {
+        if(RVentasId > 0)
+        {
+            this.ventas.VentaId = RVentasId;
+            await Buscar();
+        }
+    }
 
-	protected async Task Buscar()
-	{
-		var ventasNotNull = (await httpClient.GetFromJsonAsync<List<Ventas>>($"api/Ventas")).ToList().Any(v => v.VentaId == ventas.VentaId);
-		if (ventasNotNull)
-		{
-			var ventaEncontrada = await httpClient.GetFromJsonAsync<Ventas>($"api/Ventas/{ventas.VentaId}");
-			if(ventaEncontrada != null)
-			{
-				this.ventas = ventaEncontrada;
-				StateHasChanged();
-			}
-			else
-			{
-				var mensaje = new NotificationMessage
+    protected async Task Buscar()
+    {
+        var ventasNotNull = (await httpClient.GetFromJsonAsync<List<Ventas>>($"api/Ventas")).ToList().Any(v => v.VentaId == ventas.VentaId);
+        if (ventasNotNull)
+        {
+            var ventaEncontrada = await httpClient.GetFromJsonAsync<Ventas>($"api/Ventas/{ventas.VentaId}");
+            if(ventaEncontrada != null)
+            {
+                this.ventas = ventaEncontrada;
+                StateHasChanged();
+            }
+            else
+            {
+                var mensaje = new NotificationMessage
 				{
 					Severity = NotificationSeverity.Error,
 					Summary = "No se encontro la Venta",
 					Detail = $"No se encontro la Venta con el Id: {ventas.VentaId}",
 					Duration = 5_000
 				};
-				notificacionesService.Notify(mensaje);
-			}
-		}
+                notificacionesService.Notify(mensaje);
+            }
+        }
 
-	}
+    }
 
-	protected async Task Guardar()
-	{
-		using var response = await httpClient.PostAsJsonAsync("api/Ventas", ventas);
-		if (!response.IsSuccessStatusCode)
-		{
-			var mensaje = new NotificationMessage
+    protected async Task Guardar()
+    {
+        using var response = await httpClient.PostAsJsonAsync("api/Ventas", ventas);
+        if (!response.IsSuccessStatusCode)
+        {
+            var mensaje = new NotificationMessage
 			{
 				Severity = NotificationSeverity.Error,
 				Summary = "No se pudo guardar la Venta",
 				Detail = $"No se pudo guardar la Venta con el Id: {ventas.VentaId}",
 				Duration = 5_000
 			};
-			notificacionesService.Notify(mensaje);
-		}
-		var ProductoGuardado = await response.Content.ReadFromJsonAsync<Ventas>();
-		if(ProductoGuardado is not null)
-		{
-			this.ventas = ProductoGuardado;
-			StateHasChanged();
-			var mensaje = new NotificationMessage
+            notificacionesService.Notify(mensaje);
+        }
+        var ProductoGuardado = await response.Content.ReadFromJsonAsync<Ventas>();
+        if(ProductoGuardado is not null)
+        {
+            this.ventas = ProductoGuardado;
+            StateHasChanged();
+            var mensaje = new NotificationMessage
 			{
 				Severity = NotificationSeverity.Success,
 				Summary = "Venta Guardada",
 				Detail = $"Se guardo la Venta con el Id: {ventas.VentaId}",
 				Duration = 5_000
 			};
-			notificacionesService.Notify(mensaje);
-			Nuevo();
-		}
-	}
+            notificacionesService.Notify(mensaje);
+            await Nuevo();
+        }
+    }
 
-	protected async Task Nuevo()
-	{
-		this.ventas = new Ventas();
-		this.clientes = new Clientes();
-		
-		var mensaje = new NotificationMessage
+    protected async Task Nuevo()
+    {
+        this.ventas = new Ventas();
+        this.clientes = new Clientes();
+
+        var mensaje = new NotificationMessage
 			{
 				Severity = NotificationSeverity.Success,
 				Summary = "Nuevo ",
 				Detail = "Puede introducir una nueva Venta",
 				Duration = 5_000
 			};
-		notificacionesService.Notify(mensaje);
-	}
+        notificacionesService.Notify(mensaje);
+    }
 
-	protected async Task Eliminar()
-	{
-		using var reponse = await httpClient.DeleteAsync($"api/Ventas/{ventas.VentaId}");
-		if(!reponse.IsSuccessStatusCode)
-		{
-			var mensaje = new NotificationMessage
+    protected async Task Eliminar()
+    {
+        using var reponse = await httpClient.DeleteAsync($"api/Ventas/{ventas.VentaId}");
+        if(!reponse.IsSuccessStatusCode)
+        {
+            var mensaje = new NotificationMessage
 			{
 				Severity = NotificationSeverity.Error,
 				Summary = "No se pudo eliminar la Venta",
 				Detail = $"No se pudo eliminar la Venta con el Id: {ventas.VentaId}",
 				Duration = 5_000
 			};
-			notificacionesService.Notify(mensaje);
-		}
-		else
-		{
-			var mensaje = new NotificationMessage
+            notificacionesService.Notify(mensaje);
+        }
+        else
+        {
+            var mensaje = new NotificationMessage
 			{
 				Severity = NotificationSeverity.Success,
 				Summary = "Venta Eliminada",
 				Detail = $"Se elimino la Venta con el Id: {ventas.VentaId}",
 				Duration = 5_000
 			};
-			notificacionesService.Notify(mensaje);
-			Nuevo();
-		}
+            notificacionesService.Notify(mensaje);
+            await Nuevo();
+        }
 	}
 }

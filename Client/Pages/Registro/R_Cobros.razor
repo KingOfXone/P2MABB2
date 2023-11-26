@@ -108,151 +108,151 @@
 
 @code {
 
-	[Parameter]
-	public int CobroId { get; set; }
+    [Parameter]
+    public int CobroId { get; set; }
 
-	public Ventas ventas { get; set; } = new Ventas();
-	public Cobros cobrado { get; set; } = new Cobros();
+    public Ventas ventas { get; set; } = new Ventas();
+    public Cobros cobrado { get; set; } = new Cobros();
 
-	public List<Ventas> ventasDelCliente { get; set; } = new List<Ventas>();
+    public List<Ventas> ventasDelCliente { get; set; } = new List<Ventas>();
 
-	public Clientes clientes { get; set; } = new Clientes();
-	List<Clientes> ListaClientes { get; set; } = new List<Clientes>();
+    public Clientes clientes { get; set; } = new Clientes();
+    List<Clientes> ListaClientes { get; set; } = new List<Clientes>();
 
-	public Cobros cobros { get; set; } = new Cobros();
-	List<Cobros> ListaCobros { get; set; } = new List<Cobros>();
+    public Cobros cobros { get; set; } = new Cobros();
+    List<Cobros> ListaCobros { get; set; } = new List<Cobros>();
 
-	public CobrosDetalle cobrosDetalle { get; set; } = new CobrosDetalle();
-	public Dictionary<int, CobrosDetalle> DiccionarioCobrosDetalle { get; set; } = new Dictionary<int, CobrosDetalle>();
+    public CobrosDetalle cobrosDetalle { get; set; } = new CobrosDetalle();
+    public Dictionary<int, CobrosDetalle> DiccionarioCobrosDetalle { get; set; } = new Dictionary<int, CobrosDetalle>();
 
 
-	protected override async Task OnInitializedAsync()
-	{
-		await CargarClientes();
-		await CargarVentas();
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarClientes();
+        await CargarVentas();
 
-		foreach (var item in ventasDelCliente)
-		{
-			DiccionarioCobrosDetalle[item.VentaId] = new CobrosDetalle
+        foreach (var item in ventasDelCliente)
+        {
+            DiccionarioCobrosDetalle[item.VentaId] = new CobrosDetalle
 			{
 				VentaId = item.VentaId,
 			};
-		}
+        }
 
-		if(CobroId > 0)
-		{
-			this.cobros.CobroId = CobroId;
-			await Buscar();
-		}
+        if(CobroId > 0)
+        {
+            this.cobros.CobroId = CobroId;
+            await Buscar();
+        }
 
 
-	}
+    }
 
-	protected async Task Buscar()
-	{
-		try { await httpClient.GetFromJsonAsync<Cobros>($"api/Cobros/{cobros.CobroId}"); }
-		catch
-		{
-			var mensaje = new NotificationMessage
+    protected async Task Buscar()
+    {
+        try { await httpClient.GetFromJsonAsync<Cobros>($"api/Cobros/{cobros.CobroId}"); }
+        catch
+        {
+            var mensaje = new NotificationMessage
 				{
 					Severity = NotificationSeverity.Error,
 					Summary = "No se ha encontrado.",
 					Detail = "No se encontró uno cobro con el ID que estás buscando. ",
 					Duration = 4000
 				};
-			notificacionesService.Notify(mensaje);
-			this.Nuevo();
-			return;
-		}
-		var CobroEncontrado = await httpClient.GetFromJsonAsync<Cobros>($"api/Cobros/{cobros.CobroId}");
-		if (CobroEncontrado != null)
-		{
-			this.cobros = CobroEncontrado;
+            notificacionesService.Notify(mensaje);
+            await this.Nuevo();
+            return;
+        }
+        var CobroEncontrado = await httpClient.GetFromJsonAsync<Cobros>($"api/Cobros/{cobros.CobroId}");
+        if (CobroEncontrado != null)
+        {
+            this.cobros = CobroEncontrado;
 
-		}
-	}
+        }
+    }
 
-	protected async Task Guardar()
-	{
+    protected async Task Guardar()
+    {
 
-		using var response = await httpClient.PostAsJsonAsync("api/Cobros", cobros);
-		if (!response.IsSuccessStatusCode)
-		{
-			var mensaje = new NotificationMessage
+        using var response = await httpClient.PostAsJsonAsync("api/Cobros", cobros);
+        if (!response.IsSuccessStatusCode)
+        {
+            var mensaje = new NotificationMessage
 				{
 					Severity = NotificationSeverity.Error,
 					Summary = "No se pudo guardar el cobro",
 					Detail = $"No se pudo guardar el cobro con el Id: {cobros.CobroId}",
 					Duration = 5_000
 				};
-			notificacionesService.Notify(mensaje);
-		}
-		else
-		{
-			var cobroGuardado = await response.Content.ReadFromJsonAsync<Cobros>();
-			if (cobroGuardado is not null)
-			{
-				this.cobros = cobroGuardado;
+            notificacionesService.Notify(mensaje);
+        }
+        else
+        {
+            var cobroGuardado = await response.Content.ReadFromJsonAsync<Cobros>();
+            if (cobroGuardado is not null)
+            {
+                this.cobros = cobroGuardado;
 
-				var mensaje = new NotificationMessage
+                var mensaje = new NotificationMessage
 					{
 						Severity = NotificationSeverity.Success,
 						Summary = "Cobro Guardado",
 						Detail = $"Se guardó el cobro con el Id: {cobros.CobroId}",
 						Duration = 5_000
 					};
-				notificacionesService.Notify(mensaje);
-				StateHasChanged();
-				Nuevo();
-			}
-		}
+                notificacionesService.Notify(mensaje);
+                StateHasChanged();
+                await Nuevo();
+            }
+        }
 
-	}
+    }
 
-	protected async Task Nuevo()
-	{
-		this.ventas = new Ventas();
-		this.clientes = new Clientes();
-		
-		await CargarClientes();
-		await CargarVentas();
+    protected async Task Nuevo()
+    {
+        this.ventas = new Ventas();
+        this.clientes = new Clientes();
 
-		var mensaje = new NotificationMessage
+        await CargarClientes();
+        await CargarVentas();
+
+        var mensaje = new NotificationMessage
 			{
 				Severity = NotificationSeverity.Success,
 				Summary = "Nuevo ",
 				Detail = "Puede introducir una nueva Venta",
 				Duration = 5_000
 			};
-		notificacionesService.Notify(mensaje);
-	}
+        notificacionesService.Notify(mensaje);
+    }
 
-	protected async Task Eliminar()
-	{
-		using var reponse = await httpClient.DeleteAsync($"api/Cobros/{cobros.CobroId}");
-		if(!reponse.IsSuccessStatusCode)
-		{
-			var mensaje = new NotificationMessage
+    protected async Task Eliminar()
+    {
+        using var reponse = await httpClient.DeleteAsync($"api/Cobros/{cobros.CobroId}");
+        if(!reponse.IsSuccessStatusCode)
+        {
+            var mensaje = new NotificationMessage
 			{
 				Severity = NotificationSeverity.Error,
 				Summary = "No se pudo eliminar la Venta",
 				Detail = $"No se pudo eliminar el cobro con el Id: {cobros.CobroId}",
 				Duration = 5_000
 			};
-			notificacionesService.Notify(mensaje);
-		}
-		else
-		{
-			var mensaje = new NotificationMessage
+            notificacionesService.Notify(mensaje);
+        }
+        else
+        {
+            var mensaje = new NotificationMessage
 			{
 				Severity = NotificationSeverity.Success,
 				Summary = "Venta Eliminada",
 				Detail = $"Se elimino el cobro con el Id: {cobros.CobroId}",
 				Duration = 5_000
 			};
-			notificacionesService.Notify(mensaje);
-			Nuevo();
-		}
+            notificacionesService.Notify(mensaje);
+            await Nuevo();
+        }
 	}
 	
 	private async Task CargarClientes()
