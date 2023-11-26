@@ -8,15 +8,15 @@ using System.Threading.Tasks;
 
 namespace P2MABB.Shared
 {
-	public class Cobros
-	{
-		[Key]
-		public int CobroId { get; set; }
-		public string? Observaciones { get; set; } = string.Empty;
+    public class Cobros
+    {
+        [Key]
+        public int CobroId { get; set; }
+        public string? Observaciones { get; set; } = string.Empty;
 
-		public DateTime Fecha { get; set; } = DateTime.Now;
+        public DateTime Fecha { get; set; } = DateTime.Now;
 
-		[ForeignKey("CobradoDetailId")]
-		public ICollection<CobrosDetalle> CobradoDetail { get; set; } = new List<CobrosDetalle>();
-	}
+        [ForeignKey("CobradoDetailId")]
+        public ICollection<CobrosDetalle> CobradoDetail { get; set; } = new List<CobrosDetalle>();
+    }
 }

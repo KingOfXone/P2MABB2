@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Samir_API1_P2.Server.DAL;
+using P2MABB.Server.DAL;
 
 #nullable disable
 
-namespace Samir_API1_P2.Server.Migrations
+namespace P2MABB.Server.Migrations
 {
     [DbContext(typeof(VentasContext))]
     [Migration("20231121065046_4ra migracion_agregando_A_Contexto_clases_Cobros_y_eldetail")]
